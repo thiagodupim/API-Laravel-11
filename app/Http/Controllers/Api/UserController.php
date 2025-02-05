@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserRequest;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -44,5 +46,89 @@ class UserController extends Controller
             'status' => true,
             'user' => $user,
         ], 200);
+    }
+
+    /**
+     * Cria novo usuário com os dados fornecidos na requisição.
+     * 
+     * @param \App\Http\Requests\UserRequest $request o objeto de requisição contendo os dados do usuário a ser criado
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function store(UserRequest $request) : JsonResponse
+    {
+        // Iniciar a transação
+        DB::beginTransaction();
+
+        try{
+
+           $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => $request->password
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'user' => $user,
+                'message' => "Usuário cadastrado com sucesso!",
+            ], 201);
+
+        }catch (Exception $e){
+
+            // Operação não é concluída com êxito
+            DB::rollBack();
+
+            // Retorna uma mensagem de erro com status 400
+            return response()->json([
+                'status' => false,
+                'message' => "Usuário não cadastrado!",
+            ], 400);
+        }
+    }
+
+    /**
+     * Atualizar os dados de um usuário existente com base nos dados fornecidos na requisição
+     * 
+     * @param \App\Http\Requests\UserRequest $request o objeto de requisição contendo os dados do usuário a ser atualizado
+     * @param \App\Models\User $user o usuário a ser atualizado
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(UserRequest $request, User $user) : JsonResponse
+    {
+        //Iniciar a transação
+        DB::beginTransaction();
+
+        try{
+            
+            // Editar o registro no banco de dados
+            $user->update([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => $request->password,
+            ]);
+
+            // Operação é concluída com êxito
+            DB::commit();
+
+            // Retorna os dados do usuário editado e uma mensagem de sucesso com status 201.
+            return response()->json([
+                'status' => true,
+                'user' => $user,
+                'message' => "Usuário editado com sucesso!", 
+            ], 200);
+
+        } catch (Exception $e){
+
+            // Operação não é concluída com êxito
+            DB::rollback();
+
+            // Retorna uma mensagem de erro com status 400
+            return response()->json([
+                'status' => false,
+                'message' => "Usuário não editado!",
+            ], 400);
+        }
     }
 }
