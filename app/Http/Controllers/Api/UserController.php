@@ -101,7 +101,7 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try{
-            
+
             // Editar o registro no banco de dados
             $user->update([
                 'name' => $request->name,
@@ -128,6 +128,36 @@ class UserController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => "Usuário não editado!",
+            ], 400);
+        }
+    }
+
+    /**
+     * Excluir usuário no banco de dados
+     * 
+     * @param \App\Models\User $user o usuário a ser excluído
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy(User $user) : JsonResponse
+    {
+        try{
+
+            // Apagar os registros no banco de dados.
+            $user->delete();
+
+            // Retorna os dados do usuário apagado e uma mensagem de sucesso com status 200.
+            return response()->json([
+                'status' => true,
+                'user' => $user,
+                'message' => "Usuário apagado com sucesso!"
+            ], 200);
+
+        } catch(Exception $e) {
+
+            // Retorna uma mensagem de erro com status 400.
+            return response()->json([
+                'status' => false,
+                'message' => "Usuário não apagado!",
             ], 400);
         }
     }
